@@ -5,11 +5,11 @@ library(dplyr)
 
 # Leer datos desde un archivo xlsx
 
-datos <- read_excel("C:\\Users\\leope\\Documents\\RepTemplates\\ZonasMetro\\Bases temporales\\Bases Largas\\BL_zm99.xlsx")
+datos <- read_excel("C:\\Users\\rpm0a\\OneDrive\\Documentos\\RepTemplates\\ZMVM_cof\\ZMVM_2019.xlsx")
 
 # Crear vector subsec_mun
 
-subsec_mun <- datos %>% group_by(cvegeo, cve_sub, CVE_ZM) %>% summarize(ue = sum(ue, na.rm = TRUE), 
+subsec_mun <- datos %>% group_by(cvegeo, cve_sub) %>% summarize(ue = sum(ue, na.rm = TRUE), 
                                                                         af = sum(af, na.rm = TRUE),  
                                                                         fb = sum(fb, na.rm = TRUE), 
                                                                         pb = sum(pb, na.rm = TRUE), 
@@ -19,7 +19,7 @@ subsec_mun <- datos %>% group_by(cvegeo, cve_sub, CVE_ZM) %>% summarize(ue = sum
 
 # Crear vector tot_mun
 
-tot_mun <- datos %>% group_by(cvegeo, CVE_ZM) %>% summarize(ue = sum(ue, na.rm = TRUE), 
+tot_mun <- datos %>% group_by(cvegeo) %>% summarize(ue = sum(ue, na.rm = TRUE), 
                                                             af = sum(af, na.rm = TRUE),  
                                                             fb = sum(fb, na.rm = TRUE), 
                                                             pb = sum(pb, na.rm = TRUE), 
@@ -29,7 +29,7 @@ tot_mun <- datos %>% group_by(cvegeo, CVE_ZM) %>% summarize(ue = sum(ue, na.rm =
 
 # Crear vector subsec_zm
 
-subsec_zm <- datos %>% group_by(CVE_ZM, cve_sub) %>% summarize(ue = sum(ue, na.rm = TRUE), 
+subsec_zm <- datos %>% group_by(cve_sub) %>% summarize(ue = sum(ue, na.rm = TRUE), 
                                                                af = sum(af, na.rm = TRUE),  
                                                                fb = sum(fb, na.rm = TRUE), 
                                                                pb = sum(pb, na.rm = TRUE), 
@@ -39,7 +39,7 @@ subsec_zm <- datos %>% group_by(CVE_ZM, cve_sub) %>% summarize(ue = sum(ue, na.r
 
 # Crear vector tot_zm
 
-tot_zm <- datos %>% group_by(CVE_ZM) %>% summarize(ue = sum(ue, na.rm = TRUE), 
+tot_zm <- datos  %>% summarize(ue = sum(ue, na.rm = TRUE), 
                                                    af = sum(af, na.rm = TRUE),  
                                                    fb = sum(fb, na.rm = TRUE), 
                                                    pb = sum(pb, na.rm = TRUE), 
@@ -48,25 +48,25 @@ tot_zm <- datos %>% group_by(CVE_ZM) %>% summarize(ue = sum(ue, na.rm = TRUE),
                                                    va = sum(va, na.rm = TRUE))
   
 
-# Numerador
+# 1. Coeficiente de Localización (QL)
 
-subsec_mun_div <- left_join(subsec_mun, tot_mun, by = c("cvegeo" = "cvegeo", "CVE_ZM" = "CVE_ZM")) %>% 
+# 1.1 Numerador
+
+numerador <- left_join(datos, tot_mun, by = c("cvegeo" = "cvegeo")) %>% 
   mutate(ue = ue.x/ue.y, af = af.x/af.y, fb = fb.x/fb.y, pb = pb.x/pb.y, po = po.x/po.y, re = re.x/re.y, va = va.x/va.y) %>% 
   select(-ue.x, -ue.y, -af.x, -af.y, -fb.x, -fb.y, -pb.x, -pb.y, -po.x, -po.y, -re.x, -re.y, -va.x, -va.y)
 
-# Denominador
+# 1. 2 Denominador
 
-# Unir vectores subsec_zm y tot_zm por CVE_ZM
+# Dividir las columnas de la Base 1 por los valores únicos de la Base 2
 
-subsec_tot_zm <- left_join(subsec_zm, tot_zm, by = "CVE_ZM")
+denominador <- sapply(subsec_zm[, -1], function(col) col / unlist(tot_zm))
 
-# Dividir los valores de subsec_zm entre los valores de tot_zm por CVE_ZM
+# Agregar la columna cve_sub a los resultados
 
-subsec_tot_zm_div <- subsec_tot_zm %>%
-  mutate(ue.div = ue.x/ue.y, af.div = af.x/af.y, fb.div = fb.x/fb.y, pb.div = pb.x/pb.y, po.div = po.x/po.y, re.div = re.x/re.y, va.div = va.x/va.y) %>% 
-  select(-ue.x, -ue.y, -af.x, -af.y, -fb.x, -fb.y, -pb.x, -pb.y, -po.x, -po.y, -re.x, -re.y, -va.x, -va.y)
+denominador <- cbind(subsec_zm[, 1, drop = FALSE], denominador)
 
-# Resultado final QL
+# 1.3 Resultado final QL
 
 # Unir subsec_mun_div y subsec_tot_zm_div por CVE_ZM y cve_sub
 
