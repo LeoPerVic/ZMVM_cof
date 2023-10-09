@@ -5,11 +5,13 @@ library(dplyr)
 
 # Leer datos desde un archivo xlsx
 
-datos <- read_excel("C:\\Users\\rpm0a\\OneDrive\\Documentos\\RepTemplates\\ZMVM_cof\\ZMVM_2019.xlsx")
+subsector_mun <- read_excel("C:\\Users\\rpm0a\\OneDrive\\Documentos\\RepTemplates\\ZMVM_cof\\Bases\\Subsector i en el municipio j_18.xlsx")
+
+tot_mun <- read_excel("C:\\Users\\rpm0a\\OneDrive\\Documentos\\RepTemplates\\ZMVM_cof\\Bases\\Total de subsectores en el municipio j_18.xlsx")
 
 # Crear vector subsec_mun
 
-subsec_mun <- datos %>% group_by(cvegeo, cve_sub) %>% summarize(ue = sum(ue, na.rm = TRUE), 
+subsector_zm <- subsector_mun %>% group_by(cve_sub) %>% summarize(ue = sum(ue, na.rm = TRUE), 
                                                                         af = sum(af, na.rm = TRUE),  
                                                                         fb = sum(fb, na.rm = TRUE), 
                                                                         pb = sum(pb, na.rm = TRUE), 
@@ -19,7 +21,7 @@ subsec_mun <- datos %>% group_by(cvegeo, cve_sub) %>% summarize(ue = sum(ue, na.
 
 # Crear vector tot_mun
 
-tot_mun <- datos %>% group_by(cvegeo) %>% summarize(ue = sum(ue, na.rm = TRUE), 
+tot_zm <- tot_mun %>% summarize(ue = sum(ue, na.rm = TRUE), 
                                                             af = sum(af, na.rm = TRUE),  
                                                             fb = sum(fb, na.rm = TRUE), 
                                                             pb = sum(pb, na.rm = TRUE), 
@@ -70,19 +72,19 @@ denominador <- cbind(subsec_zm[, 1, drop = FALSE], denominador)
 
 # Unir subsec_mun_div y subsec_tot_zm_div por CVE_ZM y cve_sub
 
-QL <- left_join(subsec_mun_div, subsec_tot_zm_div, by = c("CVE_ZM", "cve_sub"))
+QL <- left_join(numerador, denominador, by = c("cve_sub"))
 
 # Dividir cada variable de subsec_mun_div entre la variable correspondiente de subsec_tot_zm_div
 
-QL <- QL %>% mutate(QLue = ue / ue.div, QLaf = af / af.div, QLfb = fb/fb.div, QLpb = pb/pb.div, QLpo = po/po.div, QLre= re/re.div, QLva = va/va.div) %>% 
-  select(-ue, -ue.div, -af, -af.div, -fb, -fb.div, -fb, -fb.div, -pb, -pb.div, -po, -po.div, -re, -re.div, -va, -va.div)
+QL <- QL %>% mutate(QLue = ue.x / ue.y, QLaf = af.x / af.y, QLfb = fb.x/fb.y, QLpb = pb.x/pb.y, QLpo = po.x/po.y, QLre= re.x/re.y, QLva = va.x/va.y) %>% 
+  select(-ue.x, -ue.y, -af.x, -af.y, -fb.x, -fb.y, -pb.x, -pb.y, -po.x, -po.y, -re.x, -re.y, -va.x, -va.y)
 
 View(QL)
 
 # Estimar coeficiente PR
 
-PR <- subsec_mun %>% 
-  left_join(subsec_zm, by = c("cve_sub", "CVE_ZM")) %>% 
+PR <- datos %>% 
+  left_join(subsec_zm, by = c("cve_sub")) %>% 
   mutate(PRue = ue.x / ue.y,
          PRaf = af.x / af.y,
          PRfb = fb.x / fb.y,
@@ -90,7 +92,7 @@ PR <- subsec_mun %>%
          PRpo = po.x / po.y,
          PRre = re.x / re.y,
          PRva = va.x / va.y) %>% 
-  select(cvegeo, cve_sub, CVE_ZM, PRue, PRaf, PRfb, PRpb, PRpo, PRre, PRva)
+  select(cvegeo, cve_sub,PRue, PRaf, PRfb, PRpb, PRpo, PRre, PRva)
 
 View(PR)
 
@@ -98,33 +100,28 @@ View(PR)
 
 # Estimar la parte que se resta
 
-resta <- tot_mun %>% 
-  left_join(tot_zm, by = c("CVE_ZM")) %>% 
-  mutate(Rue = ue.x / ue.y,
-         Raf = af.x / af.y,
-         Rfb = fb.x / fb.y,
-         Rpb = pb.x / pb.y,
-         Rpo = po.x / po.y,
-         Rre = re.x / re.y,
-         Rva = va.x / va.y) %>% 
-  select(cvegeo, CVE_ZM, Rue,Raf, Rfb, Rpb, Rpo, Rre, Rva)
+# Dividir las columnas de la Base 1 por los valores únicos de la Base 2
 
-View(resta)
-View(tot_mun)
-View(tot_zm)
+resta <- sapply(tot_mun[, -1], function(col) col / unlist(tot_zm))
+
+# Agregar la columna cve_sub a los resultados
+
+resta <- cbind(tot_mun[, 1, drop = FALSE], resta)
+
+
 # Estimar HH
 
 HH <- PR %>% 
   
-  left_join(resta, by = c("cvegeo", "CVE_ZM")) %>% 
-  mutate(HHue = PRue - Rue,
-         HHaf = PRaf - Raf,
-         HHfb = PRfb - Rfb,
-         HHpb = PRpb - Rpb,
-         HHpo = PRpo - Rpo,
-         HHre = PRre - Rre,
-         HHva = PRva - Rva) %>% 
-  select(cvegeo, cve_sub, CVE_ZM, HHue,HHaf, HHfb, HHpb, HHpo, HHre, HHva)
+  left_join(resta, by = c("cvegeo")) %>% 
+  mutate(HHue = PRue - ue,
+         HHaf = PRaf - af,
+         HHfb = PRfb - fb,
+         HHpb = PRpb - pb,
+         HHpo = PRpo - po,
+         HHre = PRre - re,
+         HHva = PRva - va) %>% 
+  select(cvegeo, cve_sub, HHue,HHaf, HHfb, HHpb, HHpo, HHre, HHva)
 
 View(HH)
 
@@ -138,18 +135,18 @@ View(IHH)
 
 # Unir datos 
 
-BLzm99_final <- left_join(datos, QL, by = c("cvegeo", "cve_sub", "CVE_ZM")) %>%
-  left_join(PR, by = c("cvegeo", "cve_sub", "CVE_ZM")) %>%
-  left_join(HH, by = c("cvegeo", "cve_sub", "CVE_ZM")) %>%
-  left_join(IHH, by = c("cvegeo", "cve_sub", "CVE_ZM"))
+BLzm19_final <- left_join(datos, QL, by = c("cvegeo", "cve_sub")) %>%
+  left_join(PR, by = c("cvegeo", "cve_sub")) %>%
+  left_join(HH, by = c("cvegeo", "cve_sub")) %>%
+  left_join(IHH, by = c("cvegeo", "cve_sub"))
 
-View(BLzm99_final)
+View(BLzm19_final)
 
 # Guardar archivo
 
 library(openxlsx)
 
-write.xlsx(BLzm99_final, "BLzm99_final.xlsx")
+write.xlsx(BLzm19_final, "BLzm99_final.xlsx")
 
 
 
