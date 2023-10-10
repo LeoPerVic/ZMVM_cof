@@ -12,22 +12,22 @@ tot_mun <- read_excel("C:\\Users\\rpm0a\\OneDrive\\Documentos\\RepTemplates\\ZMV
 # Crear vector subsec_zm
 
 subsector_zm <- subsector_mun %>% group_by(cve_sub) %>% summarize(ue = sum(ue, na.rm = TRUE), 
-                                                                        af = sum(af, na.rm = TRUE),  
-                                                                        fb = sum(fb, na.rm = TRUE), 
-                                                                        pb = sum(pb, na.rm = TRUE), 
-                                                                        po = sum(po, na.rm = TRUE), 
-                                                                        re = sum(re, na.rm = TRUE), 
-                                                                        va = sum(va, na.rm = TRUE))
+                                                                  af = sum(af, na.rm = TRUE),  
+                                                                  fb = sum(fb, na.rm = TRUE), 
+                                                                  pb = sum(pb, na.rm = TRUE), 
+                                                                  po = sum(po, na.rm = TRUE), 
+                                                                  re = sum(re, na.rm = TRUE), 
+                                                                  va = sum(va, na.rm = TRUE))
 
 # Crear vector tot_zm
 
 tot_zm <- tot_mun %>% summarize(ue = sum(ue, na.rm = TRUE), 
-                                                            af = sum(af, na.rm = TRUE),  
-                                                            fb = sum(fb, na.rm = TRUE), 
-                                                            pb = sum(pb, na.rm = TRUE), 
-                                                            po = sum(po, na.rm = TRUE), 
-                                                            re = sum(re, na.rm = TRUE), 
-                                                            va = sum(va, na.rm = TRUE))
+                                     af = sum(af, na.rm = TRUE),  
+                                     fb = sum(fb, na.rm = TRUE), 
+                                     pb = sum(pb, na.rm = TRUE), 
+                                     po = sum(po, na.rm = TRUE), 
+                                     re = sum(re, na.rm = TRUE), 
+                                     va = sum(va, na.rm = TRUE))
 
 
 
@@ -59,7 +59,7 @@ QL <- left_join(numerador, denominador, by = c("cve_sub"))
 # Dividir cada variable de subsec_mun_div entre la variable correspondiente de subsec_tot_zm_div
 
 QL <- QL %>% mutate(QLue = ue.x / ue.y, QLaf = af.x / af.y, QLfb = fb.x/fb.y, QLpb = pb.x/pb.y, QLpo = po.x/po.y, QLre= re.x/re.y, QLva = va.x/va.y) %>% 
-  select(cve_ent, ent, cve_mun, mun, cve_geo, cve_sub, ae, QLue, QLaf, QLfb, QLpo, QLre, QLva)
+  select(cve_geo, cve_sub, QLue, QLaf, QLpb, QLfb, QLpo, QLre, QLva)
 
 View(QL)
 
@@ -78,11 +78,14 @@ PR <- subsector_mun %>%
 
 View(PR)
 
+
 # Estimar coeficiente HH
 
 # Estimar la parte que se resta
 
 # Dividir las columnas de la Base 1 por los valores únicos de la Base 2
+
+tot_mun[, 7:13] <- sapply(tot_mun[, 7:13], as.numeric)
 
 resta <- sapply(tot_mun[, -1], function(col) col / unlist(tot_zm))
 
@@ -117,7 +120,7 @@ View(IHH)
 
 # Unir datos 
 
-BLzm19_final <- left_join(datos, QL, by = c("cvegeo", "cve_sub")) %>%
+BLzm19_final <- left_join(PR, QL, by = c("cve_geo", "cve_sub")) %>%
   left_join(PR, by = c("cvegeo", "cve_sub")) %>%
   left_join(HH, by = c("cvegeo", "cve_sub")) %>%
   left_join(IHH, by = c("cvegeo", "cve_sub"))
@@ -128,7 +131,7 @@ View(BLzm19_final)
 
 library(openxlsx)
 
-write.xlsx(BLzm19_final, "BLzm99_final.xlsx")
+write.xlsx(tot_zm, "tot_zm.xlsx")
 
 
 
