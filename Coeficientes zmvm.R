@@ -11,23 +11,23 @@ tot_mun <- read_excel("C:\\Users\\rpm0a\\OneDrive\\Documentos\\RepTemplates\\ZMV
 
 # Crear vector subsec_zm
 
-subsector_zm <- subsector_mun %>% group_by(cve_sub) %>% summarize(ue = sum(ue, na.rm = TRUE), 
-                                                                  af = sum(af, na.rm = TRUE),  
-                                                                  fb = sum(fb, na.rm = TRUE), 
-                                                                  pb = sum(pb, na.rm = TRUE), 
-                                                                  po = sum(po, na.rm = TRUE), 
-                                                                  re = sum(re, na.rm = TRUE), 
-                                                                  va = sum(va, na.rm = TRUE))
+subsector_zm <- subsector_mun %>% group_by(cve_sub) %>% summarize(ue = sum(ue), 
+                                                                  af = sum(af),  
+                                                                  fb = sum(fb), 
+                                                                  pb = sum(pb), 
+                                                                  po = sum(po), 
+                                                                  re = sum(re), 
+                                                                  va = sum(va))
 
 # Crear vector tot_zm
 
-tot_zm <- tot_mun %>% summarize(ue = sum(ue, na.rm = TRUE), 
-                                     af = sum(af, na.rm = TRUE),  
-                                     fb = sum(fb, na.rm = TRUE), 
-                                     pb = sum(pb, na.rm = TRUE), 
-                                     po = sum(po, na.rm = TRUE), 
-                                     re = sum(re, na.rm = TRUE), 
-                                     va = sum(va, na.rm = TRUE))
+tot_zm <- tot_mun %>% summarize(ue = sum(ue), 
+                                af = sum(af),  
+                                fb = sum(fb), 
+                                pb = sum(pb), 
+                                po = sum(po), 
+                                re = sum(re), 
+                                va = sum(va))
 
 
 
